@@ -1,0 +1,18 @@
+[
+  {
+    "text": "kocham ten film",
+    "class": "pozytywny"
+  },
+  {
+    "text": "to byl okropny film",
+    "class": "negatywny"
+  },
+  {
+    "text": "to byl zwykly dzien",
+    "class": "neutralny"
+  },
+  {
+    "text": "To był bardzo interesujący wykład o NLP.",
+    "class": "neutralny"
+  }
+]
