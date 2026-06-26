@@ -107,7 +107,7 @@ def build_model() -> Pipeline:
             ("vectorizer", TfidfVectorizer(ngram_range=(1, 2))),
             (
                 "classifier",
-                LogisticRegression(max_iter=1000, solver="liblinear", random_state=42),
+                LogisticRegression(max_iter=1000, solver="lbfgs", random_state=42),
             ),
         ]
     )
