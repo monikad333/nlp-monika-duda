@@ -164,13 +164,23 @@ Metody `/sentiment`:
 `/train`:
 
 - buduje `Embedding -> (SimpleRNN|LSTM|GRU) -> Dense -> Dense(softmax)`,
-  domyslnie `embedding_dim=100`, `max_len=200`, `batch_size=32`, `epochs=10`,
-  `EarlyStopping(patience=10% epochs)` na `val_loss`.
+  domyslnie `embedding_dim=100`, `max_len=200` (gorny limit), `batch_size=32` (gorny limit),
+  `epochs=30`, `EarlyStopping(patience=max(3, 10% epochs))` na `val_loss`.
+- **automatyczne dopasowanie do rozmiaru datasetu**: dla malych zbiorow (np. `custom` z dziesiatkami
+  przykladow) `batch_size=32` oznaczalby jedna aktualizacje wag na epoke, a `max_len=200` rozmywaloby
+  krotkie zdania samym paddingiem - zarowno `max_len`, jak i `batch_size`, sa wiec automatycznie
+  zmniejszane: `max_len` do 95. percentyla dlugosci zdan treningowych (+2), `batch_size` do
+  `len(train)//4` (min. 2). Faktyczny `max_len` jest zapisywany razem z `label_encoder` i odczytywany
+  przy predykcji, zeby dlugosc sekwencji sie zgadzala.
 - zapisuje `lab03/models/<model>_<dataset>.h5`, `..._tokenizer.h5`, `..._label_encoder.h5`
   (tokenizer/label encoder sa zapisane jako pickle pod rozszerzeniem `.h5`, zgodnie z nazewnictwem
   z `lab03.md` - nie sa to natywne pliki HDF5).
 - generuje `lab03/lab3plots/train_history_<model>_<dataset>.png` (accuracy/loss).
-- `max_len` mozna eksperymentalnie zmieniac przez `LAB3_MAX_LEN` (np. przetestuj 50/100/200/300).
+- `max_len`/`batch_size`/`epochs` (gorne limity) mozna eksperymentalnie zmieniac przez
+  `LAB3_MAX_LEN`, `LAB3_BATCH_SIZE`, `LAB3_EPOCHS`.
+- na bardzo malych zbiorach (kilkadziesiat przykladow) wyniki sieci sekwencyjnych maja duza wariancje
+  miedzy architekturami/seedami - to oczekiwane, nie blad; im wiecej danych w `sentiment_dataset.csv`
+  (przez `/add_sentiment`), tym stabilniejsze wyniki.
 
 `/compare`:
 

@@ -156,9 +156,9 @@ def sequential_based(text: str, method: str, dataset_name: str | None = None) ->
     last_error: Exception | None = None
     for candidate in candidate_datasets:
         try:
-            model, tokenizer, label_encoder = load_artifacts(method, candidate)
+            model, tokenizer, label_encoder, max_len = load_artifacts(method, candidate)
             cleaned = clean_texts([text])
-            padded = texts_to_padded_sequences(tokenizer, cleaned, max_len=MAX_LEN)
+            padded = texts_to_padded_sequences(tokenizer, cleaned, max_len=max_len or MAX_LEN)
             probabilities = model.predict(padded, verbose=0)[0]
             predicted_index = int(np.argmax(probabilities))
             label = label_encoder.inverse_transform([predicted_index])[0]

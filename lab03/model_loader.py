@@ -16,7 +16,9 @@ def model_paths(model_name: str, dataset_name: str, models_dir: str = MODELS_DIR
     }
 
 
-def save_artifacts(model: Any, tokenizer: Any, label_encoder: Any, model_name: str, dataset_name: str) -> dict[str, str]:
+def save_artifacts(
+    model: Any, tokenizer: Any, label_encoder: Any, model_name: str, dataset_name: str, max_len: int
+) -> dict[str, str]:
     os.makedirs(MODELS_DIR, exist_ok=True)
     paths = model_paths(model_name, dataset_name)
 
@@ -26,12 +28,12 @@ def save_artifacts(model: Any, tokenizer: Any, label_encoder: Any, model_name: s
         pickle.dump(tokenizer, file)
 
     with open(paths["label_encoder"], "wb") as file:
-        pickle.dump(label_encoder, file)
+        pickle.dump({"label_encoder": label_encoder, "max_len": max_len}, file)
 
     return paths
 
 
-def load_artifacts(model_name: str, dataset_name: str) -> tuple[Any, Any, Any]:
+def load_artifacts(model_name: str, dataset_name: str) -> tuple[Any, Any, Any, int]:
     from tensorflow.keras.models import load_model
 
     paths = model_paths(model_name, dataset_name)
@@ -48,9 +50,16 @@ def load_artifacts(model_name: str, dataset_name: str) -> tuple[Any, Any, Any]:
         tokenizer = pickle.load(file)
 
     with open(paths["label_encoder"], "rb") as file:
-        label_encoder = pickle.load(file)
+        payload = pickle.load(file)
 
-    return model, tokenizer, label_encoder
+    if isinstance(payload, dict):
+        label_encoder = payload["label_encoder"]
+        max_len = payload["max_len"]
+    else:
+        label_encoder = payload
+        max_len = None
+
+    return model, tokenizer, label_encoder, max_len
 
 
 def list_available_models(models_dir: str = MODELS_DIR) -> list[dict[str, Any]]:

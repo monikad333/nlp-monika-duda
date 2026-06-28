@@ -18,7 +18,7 @@ SENTIMENT_METHODS = ["rule", "nb", "rf", "transformer", "textblob", "stanza", "s
 EMBEDDING_DIM = int(os.getenv("LAB3_EMBEDDING_DIM", "100"))
 MAX_LEN = int(os.getenv("LAB3_MAX_LEN", "200"))
 BATCH_SIZE = int(os.getenv("LAB3_BATCH_SIZE", "32"))
-EPOCHS = int(os.getenv("LAB3_EPOCHS", "10"))
+EPOCHS = int(os.getenv("LAB3_EPOCHS", "30"))
 MAX_VOCAB_SIZE = int(os.getenv("LAB3_MAX_VOCAB_SIZE", "10000"))
 MAX_SAMPLES_PER_CLASS = int(os.getenv("LAB3_MAX_SAMPLES_PER_CLASS", "300"))
 
