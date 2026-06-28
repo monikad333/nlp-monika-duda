@@ -66,6 +66,38 @@ python3 bot.py
 /stats
 ```
 
+## Lab02 - eksperymenty klasyfikacji (`/classify`)
+
+Komenda `/classify` (patrz `Lab02.md`) trenuje wybrane modele na calym zbiorze danych,
+przy uzyciu wielu reprezentacji tekstu (`bow`, `tfidf`, `word2vec`, `glove`).
+
+```text
+/classify dataset=20news_group method=all gridsearch=false run=1
+/classify dataset=20news_group method=logreg gridsearch=true run=2
+/classify dataset=20news_group method=rf,nb gridsearch=false run=3
+```
+
+Parametry:
+
+- `dataset` - wbudowane: `20news_group` (sklearn `fetch_20newsgroups`, 4 kategorie). Inne datasety (`ag_news` itp.)
+  wymagaja lokalnego pliku CSV z kolumnami `text,label` w katalogu `datasets/<nazwa>.csv`.
+- `method` - `nb`, `rf`, `mlp`, `logreg` lub `all` (lista po przecinku, np. `rf,nb`).
+- `gridsearch` - `true`/`false`, strojenie hiperparametrow z `cv=3`.
+- `run` - liczba powtorzen z innym seedem (`42`, `1337`, `2024`, ...), wyniki sa usredniane w odpowiedzi bota.
+
+Wygenerowane artefakty:
+
+- `lab2plots/wordcloud_corpus.png`, `lab2plots/wordcloud_class_<klasa>.png`
+- `lab2plots/{dataset}_{embedding}_{pca|tsne|svd}_embedding.png` - wizualizacja przestrzeni embeddingu
+- `lab2plots/confusion_<embedding>_<model>.png` - macierze pomylek
+- `lab2plots/feature_importance_<dataset>_<embedding>_<model>.txt` - top cechy (dla `bow`/`tfidf` + `rf`/`logreg`)
+- `lab2_similar_words.txt` - podobne slowa dla `word2vec`/`glove` (space, computer, science, music, car)
+- `lab2plots/word_embedding_pca.png`, `lab2plots/word_embedding_tsne.png`
+- `lab2results.csv` - wszystkie wyniki (`dataset,embedding,model,accuracy,macro_f1,seed`)
+
+Domyslnie kazda klasa datasetu jest ograniczona do `LAB2_MAX_SAMPLES_PER_CLASS` (120) przykladow, zeby
+eksperyment liczyl sie w rozsadnym czasie - mozna to zmienic zmienna srodowiskowa.
+
 ## Struktura plikow
 
 - `bot.py` - Telegram handlers i uruchomienie bota

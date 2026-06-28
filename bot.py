@@ -19,6 +19,7 @@ from classifier import (
     predict_class,
 )
 from nlp_task import ensure_nltk_resources, run_corpus_stats, run_full_pipeline, run_single_task, split_sentences
+from lab2_experiment import ClassifyArgsError, parse_classify_args, run_classify_experiment
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -28,6 +29,9 @@ LOGGER = logging.getLogger(__name__)
 
 DATA_PATH = os.getenv("SENTENCES_PATH", "sentences.json")
 PLOTS_DIR = os.getenv("PLOTS_DIR", "plots")
+LAB2_PLOTS_DIR = os.getenv("LAB2_PLOTS_DIR", "lab2plots")
+LAB2_RESULTS_PATH = os.getenv("LAB2_RESULTS_PATH", "lab2results.csv")
+LAB2_MAX_PLOTS_TO_SEND = int(os.getenv("LAB2_MAX_PLOTS_TO_SEND", "6"))
 
 
 def _parse_quoted_args(message_text: str | None) -> list[str] | None:
@@ -77,7 +81,8 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         "/task <task_name> \"text\" \"class\"\n"
         "/full_pipeline \"text\" \"class\"\n"
         "/classifier \"text\"\n"
-        "/stats\n\n"
+        "/stats\n"
+        "/classify dataset=<name> method=<model|all> gridsearch=<true/false> run=<n>\n\n"
         "Allowed classes: pozytywny, neutralny, negatywny"
     )
     await update.message.reply_text(message)
@@ -271,6 +276,59 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     await _send_plot_images(update, stats_result["plots"])
 
 
+async def classify_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    del context
+    if not update.message or not update.message.text:
+        return
+
+    args_text = update.message.text.partition(" ")[2]
+
+    try:
+        params = parse_classify_args(args_text)
+        gridsearch = params["gridsearch"].strip().lower() == "true"
+        run_count = int(params["run"])
+    except (ClassifyArgsError, ValueError) as exc:
+        await update.message.reply_text(
+            f"{exc}\nUsage: /classify dataset=<name> method=<model|all> gridsearch=<true/false> run=<n>"
+        )
+        return
+
+    await update.message.reply_text(
+        f"Starting experiment: dataset={params['dataset']} method={params['method']} "
+        f"gridsearch={gridsearch} run={run_count}. This may take a while..."
+    )
+
+    loop = asyncio.get_event_loop()
+    try:
+        summary = await loop.run_in_executor(
+            None,
+            run_classify_experiment,
+            params["dataset"],
+            params["method"],
+            gridsearch,
+            run_count,
+            LAB2_PLOTS_DIR,
+            LAB2_RESULTS_PATH,
+        )
+    except (ClassifyArgsError, ValueError) as exc:
+        await update.message.reply_text(str(exc))
+        return
+    except Exception:
+        LOGGER.exception("/classify failed")
+        await update.message.reply_text("Internal error while running the experiment.")
+        return
+
+    lines = ["Averaged results (embedding | model | accuracy | macro_f1):"]
+    for row in summary["averaged"]:
+        lines.append(f"{row['embedding']} | {row['model']} | {row['accuracy']} | {row['macro_f1']}")
+    lines.append(f"Full results saved to: {summary['results_path']}")
+    lines.append(f"Generated {len(summary['generated_files'])} files in '{LAB2_PLOTS_DIR}/'.")
+
+    await update.message.reply_text("\n".join(lines))
+    image_paths = [path for path in summary["generated_files"] if path.lower().endswith(".png")]
+    await _send_plot_images(update, image_paths[:LAB2_MAX_PLOTS_TO_SEND])
+
+
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
     LOGGER.error("Exception while handling update %s", update, exc_info=context.error)
 
@@ -291,6 +349,7 @@ def main() -> None:
     app.add_handler(CommandHandler("full_pipeline", full_pipeline_command))
     app.add_handler(CommandHandler("classifier", classifier_command))
     app.add_handler(CommandHandler("stats", stats_command))
+    app.add_handler(CommandHandler("classify", classify_command))
     app.add_error_handler(error_handler)
 
     # Python 3.14 no longer creates a default loop for the main thread.
