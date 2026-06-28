@@ -55,10 +55,11 @@ def save_knowledge_graph(relations: list[tuple[str, str, str]], plots_dir: str =
     for source, relation, target in relations:
         graph.add_edge(source, target, label=relation)
 
-    fig, axis = plt.subplots(figsize=(8, 6))
-    layout = nx.spring_layout(graph, seed=42)
+    fig, axis = plt.subplots(figsize=(10, 8))
+    node_count = max(graph.number_of_nodes(), 1)
+    layout = nx.spring_layout(graph, seed=42, k=2.5 / (node_count**0.5), scale=2.0)
 
-    nx.draw_networkx_nodes(graph, layout, ax=axis, node_color="#4e79a7", node_size=1800)
+    nx.draw_networkx_nodes(graph, layout, ax=axis, node_color="#4e79a7", node_size=2400)
     nx.draw_networkx_labels(graph, layout, ax=axis, font_size=8, font_color="white")
     nx.draw_networkx_edges(graph, layout, ax=axis, arrows=True)
 
@@ -67,6 +68,7 @@ def save_knowledge_graph(relations: list[tuple[str, str, str]], plots_dir: str =
 
     axis.set_title("Knowledge graph")
     axis.axis("off")
+    axis.margins(0.2)
 
     os.makedirs(plots_dir, exist_ok=True)
     timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
