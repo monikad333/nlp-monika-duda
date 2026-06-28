@@ -86,8 +86,7 @@ def run_classify_experiment(
     generated_files.extend(save_wordcloud_per_class(texts, labels, plots_dir))
 
     all_rows: list[dict[str, Any]] = []
-    similar_words_written = False
-    word_embedding_plots_written = False
+    similar_words_by_embedding: dict[str, dict[str, Any]] = {}
 
     for run_index, seed in enumerate(seeds):
         train_texts, test_texts, train_labels, test_labels = train_test_split(
@@ -104,26 +103,30 @@ def run_classify_experiment(
                     save_embedding_reduction(embedding.X_train, train_labels, reduction_method, path, seed=seed)
                     generated_files.append(path)
 
-            if run_index == 0 and embedding_name in {"word2vec", "glove"} and embedding.keyed_vectors is not None:
-                if not similar_words_written:
-                    matches = similar_words(embedding.keyed_vectors, SIMILARITY_QUERY_WORDS, topn=5)
-                    with open("lab2_similar_words.txt", "w", encoding="utf-8") as file:
-                        for word, neighbours in matches.items():
-                            file.write(f"{word}: {neighbours}\n")
-                    generated_files.append("lab2_similar_words.txt")
-                    similar_words_written = True
+            if (
+                run_index == 0
+                and embedding_name in {"word2vec", "glove"}
+                and embedding.keyed_vectors is not None
+                and embedding_name not in similar_words_by_embedding
+            ):
+                matches = similar_words(embedding.keyed_vectors, SIMILARITY_QUERY_WORDS, topn=5)
+                similar_words_by_embedding[embedding_name] = matches
 
-                if not word_embedding_plots_written:
-                    pca_path = save_word_embedding_plot(
-                        SIMILARITY_QUERY_WORDS, embedding.keyed_vectors, "pca", os.path.join(plots_dir, "word_embedding_pca.png")
-                    )
-                    tsne_path = save_word_embedding_plot(
-                        SIMILARITY_QUERY_WORDS, embedding.keyed_vectors, "tsne", os.path.join(plots_dir, "word_embedding_tsne.png")
-                    )
-                    for path in (pca_path, tsne_path):
-                        if path:
-                            generated_files.append(path)
-                    word_embedding_plots_written = True
+                pca_path = save_word_embedding_plot(
+                    SIMILARITY_QUERY_WORDS,
+                    embedding.keyed_vectors,
+                    "pca",
+                    os.path.join(plots_dir, f"word_embedding_{embedding_name}_pca.png"),
+                )
+                tsne_path = save_word_embedding_plot(
+                    SIMILARITY_QUERY_WORDS,
+                    embedding.keyed_vectors,
+                    "tsne",
+                    os.path.join(plots_dir, f"word_embedding_{embedding_name}_tsne.png"),
+                )
+                for path in (pca_path, tsne_path):
+                    if path:
+                        generated_files.append(path)
 
             for method_name in methods:
                 model = build_model(method_name, embedding.is_dense, seed, use_gridsearch)
@@ -156,6 +159,15 @@ def run_classify_experiment(
                     saved_path = save_feature_importance(model, embedding.feature_names, importance_path)
                     if saved_path:
                         generated_files.append(saved_path)
+
+    if similar_words_by_embedding:
+        with open("lab2_similar_words.txt", "w", encoding="utf-8") as file:
+            for embedding_name, matches in similar_words_by_embedding.items():
+                file.write(f"[{embedding_name}]\n")
+                for word, neighbours in matches.items():
+                    file.write(f"{word}: {neighbours}\n")
+                file.write("\n")
+        generated_files.append("lab2_similar_words.txt")
 
     _write_results_csv(all_rows, results_path)
 

@@ -91,8 +91,8 @@ Wygenerowane artefakty:
 - `lab2plots/{dataset}_{embedding}_{pca|tsne|svd}_embedding.png` - wizualizacja przestrzeni embeddingu
 - `lab2plots/confusion_<embedding>_<model>.png` - macierze pomylek
 - `lab2plots/feature_importance_<dataset>_<embedding>_<model>.txt` - top cechy (dla `bow`/`tfidf` + `rf`/`logreg`)
-- `lab2_similar_words.txt` - podobne slowa dla `word2vec`/`glove` (space, computer, science, music, car)
-- `lab2plots/word_embedding_pca.png`, `lab2plots/word_embedding_tsne.png`
+- `lab2_similar_words.txt` - podobne slowa dla `word2vec`/`glove` (space, computer, science, music, car), osobna sekcja na embedding
+- `lab2plots/word_embedding_<embedding>_pca.png`, `lab2plots/word_embedding_<embedding>_tsne.png` (per `word2vec`/`glove`)
 - `lab2results.csv` - wszystkie wyniki (`dataset,embedding,model,accuracy,macro_f1,seed`)
 
 Domyslnie kazda klasa datasetu jest ograniczona do `LAB2_MAX_SAMPLES_PER_CLASS` (120) przykladow, zeby
