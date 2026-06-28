@@ -27,6 +27,16 @@ from lab03.commands import (
     sentiment_command,
     train_command,
 )
+from lab04.commands import (
+    analyze_entities_command,
+    knowledge_graph_command,
+    language_detect_command,
+    ned_command,
+    nel_command,
+    ner_command,
+    summarize_command,
+    translate_command,
+)
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -94,7 +104,15 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         "/train model=<simplernn|lstm|gru> dataset=<amazon|imdb|custom>\n"
         "/compare dataset=<amazon|imdb|custom> methods=<lista_metod>\n"
         '/add_sentiment "tekst" "etykieta"\n'
-        "/models\n\n"
+        "/models\n"
+        '/ner method=<spacy|stanza> text="tekst"\n'
+        '/nel text="tekst" language=<en|pl>\n'
+        '/ned entity="tekst" context="tekst"\n'
+        '/translate text="tekst" target_lang=<en|pl|de|fr|es>\n'
+        '/summarize text="tekst" summary_type=<extractive|abstractive|bullets> length=<short|medium|long>\n'
+        '/analyze_entities text="tekst" link=<true|false>\n'
+        '/knowledge_graph text="tekst"\n'
+        '/language_detect text="tekst"\n\n'
         "Allowed classes: pozytywny, neutralny, negatywny"
     )
     await update.message.reply_text(message)
@@ -367,6 +385,14 @@ def main() -> None:
     app.add_handler(CommandHandler("compare", compare_command))
     app.add_handler(CommandHandler("add_sentiment", add_sentiment_command))
     app.add_handler(CommandHandler("models", models_command))
+    app.add_handler(CommandHandler("ner", ner_command))
+    app.add_handler(CommandHandler("nel", nel_command))
+    app.add_handler(CommandHandler("ned", ned_command))
+    app.add_handler(CommandHandler("translate", translate_command))
+    app.add_handler(CommandHandler("summarize", summarize_command))
+    app.add_handler(CommandHandler("analyze_entities", analyze_entities_command))
+    app.add_handler(CommandHandler("knowledge_graph", knowledge_graph_command))
+    app.add_handler(CommandHandler("language_detect", language_detect_command))
     app.add_error_handler(error_handler)
 
     # Python 3.14 no longer creates a default loop for the main thread.

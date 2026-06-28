@@ -12,6 +12,8 @@ lab02/             Lab02.md, lab2_*.py, lab2results.csv, lab2_similar_words.txt,
 lab03/             lab03.md, sentiment_dataset.csv, config/datasets/preprocessing/
                    sentiment_methods/training/compare/commands/model_loader/visualizations.py,
                    models/, lab3plots/, lab3results.csv
+lab04/             Lab04.md, config/ner/nel/translation/summarization/knowledge_graph/
+                   language/commands/utils.py, lab4plots/, summaries/
 bot.py             jeden punkt wejscia - importuje z common/ i lab0N/
 ```
 
@@ -188,6 +190,67 @@ Metody `/sentiment`:
   dopisuje wiersze do `lab03/lab3results.csv`, zapisuje `lab03/lab3plots/confusion_<method>_<dataset>.png`
   i `lab03/lab3plots/compare_methods_<dataset>.png`, a takze word cloud per klasa
   (`lab03/lab3plots/wordcloud_<klasa>.png`) i rozklad klas (`lab03/lab3plots/class_distribution_<dataset>.png`).
+
+## Lab04 - NER/NEL/NED, tlumaczenie i podsumowania LLM
+
+Komendy (patrz `lab04/Lab04.md`):
+
+```text
+/ner method=<spacy|stanza> text="tekst"
+/nel text="tekst" language=<en|pl>
+/ned entity="tekst" context="tekst"
+/translate text="tekst" target_lang=<en|pl|de|fr|es>
+/summarize text="tekst" summary_type=<extractive|abstractive|bullets> length=<short|medium|long>
+/analyze_entities text="tekst" link=<true|false>
+/knowledge_graph text="tekst"
+/language_detect text="tekst"
+```
+
+Przyklady:
+
+```text
+/ner method=spacy text="Steve Jobs, założyciel Apple, urodził się w San Francisco."
+/nel text="Steve Jobs" language=en
+/ned entity="Steve Jobs" context="Steve Jobs founded Apple, technology company"
+/translate text="The quick brown fox jumps over the lazy dog" target_lang=pl
+/summarize text="Dlugi tekst do podsumowania..." summary_type=abstractive length=medium
+/analyze_entities text="Elon Musk posiada firme Tesla w Austin." link=true
+/knowledge_graph text="Elon Musk posiada firme Tesla w Austin."
+/language_detect text="To jest dluzszy tekst po polsku do wykrycia jezyka."
+```
+
+**NER** - `spacy` (`en_core_web_sm`/`pl_core_news_sm`, jezyk wykrywany automatycznie przez `langdetect`
+jesli nie podano) i `stanza` (model NER dla wykrytego/wskazanego jezyka, pobierany automatycznie).
+Male modele `*_sm` maja ograniczona dokladnosc dla nietypowych nazw firm/produktow (np. "Tesla", "xAI"
+w polskim tekscie moga nie zostac wykryte) - to ograniczenie modelu, nie bledu integracji.
+
+**NEL/NED** - wyszukiwanie kandydatow przez Wikidata API (`wbsearchentities`) + podglad z Wikipedia REST
+API (wymaga naglowka `User-Agent`, inaczej Wikimedia zwraca 403). `/nel` zwraca liste kandydatow
+z confidence (ranking wedlug pozycji w wynikach wyszukiwania). `/ned` dodatkowo re-rankuje kandydatow
+wedlug nakladania sie opisu kandydata z podanym kontekstem i odfiltrowuje te o niskiej pewnosci
+(`LAB4_NEL_CONFIDENCE_THRESHOLD`, domyslnie 0.3).
+
+**Tlumaczenie** - modele `Helsinki-NLP/opus-mt-<src>-<tgt>` ladowane bezposrednio przez
+`AutoTokenizer`/`AutoModelForSeq2SeqLM` (transformers 5.x nie ma juz generycznego pipeline'u
+`translation`, wiec generowanie tlumaczenia robione jest recznie przez `model.generate()`).
+Dla `en->pl` nie istnieje bezposredni model Helsinki-NLP - uzywany jest wielojezyczny
+`opus-mt-en-sla` z prefiksem `>>pol<<` (`LAB4_TRANSLATION_MODEL_OVERRIDES` w `config.py`).
+Wymaga pakietow `sentencepiece` i `sacremoses` (tokenizery Marian).
+
+**Podsumowania (`/summarize`)** - komunikacja z lokalnym Ollama (`http://localhost:11434/api/generate`,
+`LAB4_OLLAMA_MODEL` domyslnie `llama3.2`). Wymaga zainstalowanego i odpalonego Ollama
+(`brew install ollama`, `ollama serve`, `ollama pull <model>`) - bez tego komenda zwraca czytelny blad
+z instrukcja. Streszczenia zapisywane do `lab04/summaries/summary_<typ>_<dlugosc>_<timestamp>.txt`.
+
+**`/analyze_entities`** - laczy NER (spacy) z NEL (Wikidata) dla kazdej wykrytej encji.
+
+**`/knowledge_graph`** (opcjonalne) - heurystyczne relacje miedzy encjami wspolwystepujacymi w tym samym
+zdaniu (na podstawie slow kluczowych w oknie tekstu wokol par encji - `founder`/`worked_for`/
+`located_in`/`belongs_to`, domyslnie `related_to`), wizualizacja `networkx`+`matplotlib`,
+zapis do `lab04/lab4plots/knowledge_graph_<timestamp>.png`.
+
+**`/language_detect`** - `langdetect`; na bardzo krotkich tekstach (kilka slow) detekcja jezyka
+moze byc niepewna (znana slabość statystycznych metod tego typu) - dluzsze teksty dzialaja stabilnie.
 
 ## Struktura plikow
 
