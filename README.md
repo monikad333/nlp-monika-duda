@@ -9,10 +9,13 @@ z Lab01) jest w `common/`.
 common/            wspolne moduly NLP (nlp_task.py, classifier.py)
 lab01/             Lab01.md, sentences.json, plots/
 lab02/             Lab02.md, lab2_*.py, lab2results.csv, lab2_similar_words.txt, plots/
+lab03/             lab03.md, sentiment_dataset.csv, config/datasets/preprocessing/
+                   sentiment_methods/training/compare/commands/model_loader/visualizations.py,
+                   models/, lab3plots/, lab3results.csv
 bot.py             jeden punkt wejscia - importuje z common/ i lab0N/
 ```
 
-Projekt realizuje wymagania z `lab01/Lab01.md` i `lab02/Lab02.md`.
+Projekt realizuje wymagania z `lab01/Lab01.md`, `lab02/Lab02.md` i `lab03/lab03.md`.
 
 ## Funkcjonalnosci
 
@@ -111,6 +114,70 @@ Wygenerowane artefakty (w `lab02/`):
 
 Domyslnie kazda klasa datasetu jest ograniczona do `LAB2_MAX_SAMPLES_PER_CLASS` (120) przykladow, zeby
 eksperyment liczyl sie w rozsadnym czasie - mozna to zmienic zmienna srodowiskowa.
+
+## Lab03 - analiza sentymentu i sieci sekwencyjne
+
+Komendy (patrz `lab03/lab03.md`):
+
+```text
+/sentiment method=<rule|nb|rf|transformer|textblob|stanza|simplernn|lstm|gru> text="tekst"
+/train model=<simplernn|lstm|gru> dataset=<amazon|imdb|custom>
+/compare dataset=<amazon|imdb|custom> methods=<lista_metod>
+/add_sentiment "tekst" "etykieta"
+/models
+```
+
+Przyklady:
+
+```text
+/sentiment method=rule text="To był naprawdę świetny film"
+/sentiment method=transformer text="Produkt przyszedł uszkodzony"
+/train model=lstm dataset=custom
+/compare dataset=custom methods=rule,nb,rf,textblob
+/add_sentiment "Obsługa była poprawna, ale niczym mnie nie zachwyciła" "neutralny"
+/models
+```
+
+Datasety:
+
+- `custom` - `lab03/sentiment_dataset.csv` (kolumny `text,label`), rozszerzany przez `/add_sentiment`
+  (kazdy tekst zapisywany jest jako jeden rekord, bez dzielenia na zdania).
+- `imdb` - `tensorflow.keras.datasets.imdb` (dekodowany do tekstu, klasy: pozytywny/negatywny - 2 klasy).
+- `amazon` - wymaga lokalnego pliku `datasets/amazon_sentiment.csv` (`text,label`) - Kaggle wymaga
+  uwierzytelnienia, wiec nie da sie pobrac automatycznie.
+
+Metody `/sentiment`:
+
+- `rule` - prosty lexicon PL (slowa pozytywne/negatywne, bez wymagan treningowych).
+- `nb` / `rf` - trenowane "na zywo" na `lab03/sentiment_dataset.csv` (TF-IDF + MultinomialNB / RandomForest).
+- `transformer` - `transformers.pipeline("sentiment-analysis")`, model wielojezyczny
+  `nlptown/bert-base-multilingual-uncased-sentiment` (1-5 gwiazdek zmapowane na 3 klasy);
+  uzywa backendu TensorFlow (`framework="tf"`), zeby nie wymagac PyTorch.
+- `textblob` - `TextBlob.sentiment.polarity`; biblioteka jest trenowana po angielsku, dla polskiego
+  tekstu wyniki sa orientacyjne.
+- `stanza` - pipeline `stanza` z modelem sentymentu dla `en` (Stanza nie ma wbudowanego modelu
+  sentymentu dla polskiego); jak wyzej - ograniczona jakosc dla tekstu PL.
+- `simplernn` / `lstm` / `gru` - wymagaja wczesniejszego `/train`. `/sentiment` szuka wytrenowanego
+  modelu w kolejnosci datasetow `custom -> imdb -> amazon` (komenda `/sentiment` nie przyjmuje
+  parametru dataset).
+
+`/train`:
+
+- buduje `Embedding -> (SimpleRNN|LSTM|GRU) -> Dense -> Dense(softmax)`,
+  domyslnie `embedding_dim=100`, `max_len=200`, `batch_size=32`, `epochs=10`,
+  `EarlyStopping(patience=10% epochs)` na `val_loss`.
+- zapisuje `lab03/models/<model>_<dataset>.h5`, `..._tokenizer.h5`, `..._label_encoder.h5`
+  (tokenizer/label encoder sa zapisane jako pickle pod rozszerzeniem `.h5`, zgodnie z nazewnictwem
+  z `lab03.md` - nie sa to natywne pliki HDF5).
+- generuje `lab03/lab3plots/train_history_<model>_<dataset>.png` (accuracy/loss).
+- `max_len` mozna eksperymentalnie zmieniac przez `LAB3_MAX_LEN` (np. przetestuj 50/100/200/300).
+
+`/compare`:
+
+- uruchamia kazda metode na tym samym (ograniczonym `sample_limit`) zbiorze, liczy accuracy/precision/recall/macro_f1,
+  dopisuje wiersze do `lab03/lab3results.csv`, zapisuje `lab03/lab3plots/confusion_<method>_<dataset>.png`
+  i `lab03/lab3plots/compare_methods_<dataset>.png`, a takze word cloud per klasa
+  (`lab03/lab3plots/wordcloud_<klasa>.png`) i rozklad klas (`lab03/lab3plots/class_distribution_<dataset>.png`).
 
 ## Struktura plikow
 

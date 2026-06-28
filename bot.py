@@ -20,6 +20,13 @@ from common.classifier import (
 )
 from common.nlp_task import ensure_nltk_resources, run_corpus_stats, run_full_pipeline, run_single_task, split_sentences
 from lab02.lab2_experiment import ClassifyArgsError, parse_classify_args, run_classify_experiment
+from lab03.commands import (
+    add_sentiment_command,
+    compare_command,
+    models_command,
+    sentiment_command,
+    train_command,
+)
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -82,7 +89,12 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         "/full_pipeline \"text\" \"class\"\n"
         "/classifier \"text\"\n"
         "/stats\n"
-        "/classify dataset=<name> method=<model|all> gridsearch=<true/false> run=<n>\n\n"
+        "/classify dataset=<name> method=<model|all> gridsearch=<true/false> run=<n>\n"
+        '/sentiment method=<rule|nb|rf|transformer|textblob|stanza|simplernn|lstm|gru> text="tekst"\n'
+        "/train model=<simplernn|lstm|gru> dataset=<amazon|imdb|custom>\n"
+        "/compare dataset=<amazon|imdb|custom> methods=<lista_metod>\n"
+        '/add_sentiment "tekst" "etykieta"\n'
+        "/models\n\n"
         "Allowed classes: pozytywny, neutralny, negatywny"
     )
     await update.message.reply_text(message)
@@ -350,6 +362,11 @@ def main() -> None:
     app.add_handler(CommandHandler("classifier", classifier_command))
     app.add_handler(CommandHandler("stats", stats_command))
     app.add_handler(CommandHandler("classify", classify_command))
+    app.add_handler(CommandHandler("sentiment", sentiment_command))
+    app.add_handler(CommandHandler("train", train_command))
+    app.add_handler(CommandHandler("compare", compare_command))
+    app.add_handler(CommandHandler("add_sentiment", add_sentiment_command))
+    app.add_handler(CommandHandler("models", models_command))
     app.add_error_handler(error_handler)
 
     # Python 3.14 no longer creates a default loop for the main thread.
