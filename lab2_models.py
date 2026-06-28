@@ -12,6 +12,7 @@ MODEL_NAMES = ["nb", "rf", "mlp", "logreg"]
 
 PARAM_GRIDS = {
     "nb": {"classifier__alpha": [0.1, 0.5, 1.0]},
+    "nb_dense": {"classifier__var_smoothing": [1e-9, 1e-8, 1e-7]},
     "rf": {"classifier__n_estimators": [100, 300], "classifier__max_depth": [None, 10, 20]},
     "logreg": {"classifier__C": [0.1, 1, 10]},
     "mlp": {"classifier__hidden_layer_sizes": [(128,), (256, 128)]},
@@ -43,7 +44,8 @@ def build_model(method: str, is_dense: bool, seed: int, use_gridsearch: bool) ->
         return estimator
 
     normalized = (method or "").strip().lower()
-    param_grid = PARAM_GRIDS.get(normalized)
+    grid_key = "nb_dense" if (normalized == "nb" and is_dense) else normalized
+    param_grid = PARAM_GRIDS.get(grid_key)
     if not param_grid:
         return estimator
 
