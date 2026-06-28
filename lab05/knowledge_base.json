@@ -1,0 +1,27 @@
+[
+  {
+    "question": "Kto jest CEO Tesli?",
+    "keywords": "tesla ceo dyrektor elon musk",
+    "answer": "CEO Tesli jest Elon Musk."
+  },
+  {
+    "question": "Jaka jest stolica Polski?",
+    "keywords": "polska stolica warszawa poland capital",
+    "answer": "Stolica Polski to Warszawa."
+  },
+  {
+    "question": "Kim jest zalozyciel WSEI?",
+    "keywords": "wsei uczelnia uniwersytet krakow",
+    "answer": "WSEI to Wyzsza Szkola Ekonomii i Informatyki w Krakowie."
+  },
+  {
+    "question": "Co to jest NLP?",
+    "keywords": "nlp natural language processing przetwarzanie jezyka",
+    "answer": "NLP (Natural Language Processing) to dziedzina sztucznej inteligencji zajmujaca sie przetwarzaniem i rozumieniem jezyka naturalnego."
+  },
+  {
+    "question": "Co to jest Ollama?",
+    "keywords": "ollama llm model lokalny",
+    "answer": "Ollama to narzedzie do lokalnego uruchamiania duzych modeli jezykowych (LLM) na wlasnym komputerze."
+  }
+]

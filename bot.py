@@ -9,7 +9,7 @@ from collections import Counter
 from typing import Any
 
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 
 from common.classifier import (
     VALID_CLASSES,
@@ -37,6 +37,7 @@ from lab04.commands import (
     summarize_command,
     translate_command,
 )
+from lab05.commands import ask_command, photo_command, tools_command
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -112,7 +113,10 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         '/summarize text="tekst" summary_type=<extractive|abstractive|bullets> length=<short|medium|long>\n'
         '/analyze_entities text="tekst" link=<true|false>\n'
         '/knowledge_graph text="tekst"\n'
-        '/language_detect text="tekst"\n\n'
+        '/language_detect text="tekst"\n'
+        '/ask text="pytanie" (function/tool calling przez Ollama)\n'
+        "/tools\n"
+        "Wyslij zdjecie, by uzyc narzedzia Vision\n\n"
         "Allowed classes: pozytywny, neutralny, negatywny"
     )
     await update.message.reply_text(message)
@@ -393,6 +397,9 @@ def main() -> None:
     app.add_handler(CommandHandler("analyze_entities", analyze_entities_command))
     app.add_handler(CommandHandler("knowledge_graph", knowledge_graph_command))
     app.add_handler(CommandHandler("language_detect", language_detect_command))
+    app.add_handler(CommandHandler("ask", ask_command))
+    app.add_handler(CommandHandler("tools", tools_command))
+    app.add_handler(MessageHandler(filters.PHOTO, photo_command))
     app.add_error_handler(error_handler)
 
     # Python 3.14 no longer creates a default loop for the main thread.

@@ -14,6 +14,8 @@ lab03/             lab03.md, sentiment_dataset.csv, config/datasets/preprocessin
                    models/, lab3plots/, lab3results.csv
 lab04/             Lab04.md, config/ner/nel/translation/summarization/knowledge_graph/
                    language/commands/utils.py, lab4plots/, summaries/
+lab05/             Lab05.md, config/tools/tool_schemas/agent/commands.py,
+                   knowledge_base.json, history.jsonl, images/
 bot.py             jeden punkt wejscia - importuje z common/ i lab0N/
 ```
 
@@ -251,6 +253,54 @@ zapis do `lab04/lab4plots/knowledge_graph_<timestamp>.png`.
 
 **`/language_detect`** - `langdetect`; na bardzo krotkich tekstach (kilka slow) detekcja jezyka
 moze byc niepewna (znana slabość statystycznych metod tego typu) - dluzsze teksty dzialaja stabilnie.
+
+## Lab05 - Function Calling / Tool Calling (Ollama)
+
+Komendy (patrz `lab05/Lab05.md`):
+
+```text
+/ask text="pytanie"
+/tools
+```
+
+Wyslanie zdjecia do bota (z opcjonalnym podpisem) automatycznie odpala narzedzie Vision.
+
+Przyklady:
+
+```text
+/ask text="Jaka jest pogoda w Warszawie?"
+/ask text="Porownaj pogode w Warszawie i Paryzu"
+/ask text="Ile to jest 15 * 23 + 7?"
+/ask text="Kto jest CEO Tesli?"
+```
+
+`/ask` wysyla wiadomosc do lokalnego modelu Ollama (`LAB5_TOOL_MODEL`, domyslnie `llama3.2`) razem
+z definicjami 5 narzedzi (`lab05/tool_schemas.py`) przez `/api/chat`. Model sam decyduje, czy i jakie
+narzedzie wywolac (function/tool calling), wynik narzedzia jest doklejany do rozmowy, a model
+generuje koncowa, zinterpretowana odpowiedz (do `LAB5_MAX_TOOL_ROUNDS` rund, domyslnie 5 - obejmuje
+to scenariusze multi-tool, np. porownanie pogody w dwoch miastach wymaga dwoch wywolan `get_weather`).
+Kazda interakcja (pytanie, wywolane narzedzia, finalna odpowiedz, czas) jest zapisywana do
+`lab05/history.jsonl`.
+
+**5 narzedzi (`lab05/tools.py`):**
+
+1. `web_search(query)` - wyszukiwanie w Wikipedii (bez klucza API).
+2. `analyze_image(image_path)` - opis obrazu przez multimodalny model Ollama (`LAB5_VISION_MODEL`,
+   domyslnie `moondream`); w Telegramie wywolywane automatycznie po wyslaniu zdjecia.
+3. `simple_calculator(expression)` - bezpieczna ewaluacja wyrazen matematycznych przez `ast`
+   (bez `eval()`, ograniczone do `+ - * / ** %`).
+4. `local_knowledge(query)` - przeszukiwanie lokalnej bazy faktow `lab05/knowledge_base.json`
+   (dopasowanie po slowach kluczowych).
+5. `get_weather(city)` - geokodowanie miasta (Open-Meteo Geocoding API, sortowane po populacji,
+   zeby uniknac pomylek typu "Warszawa" w Ohio vs Warszawa w Polsce) + aktualna pogoda
+   (Open-Meteo Forecast API).
+
+**Uwaga o jakosci wnioskowania:** maly lokalny model (`llama3.2` 3B) generalnie dobrze wybiera
+pojedyncze narzedzia i radzi sobie z prostym multi-tool reasoning (np. dwa wywolania `get_weather`
+dla porownania miast), ale czasem dokleja dodatkowe, niepotrzebne wywolanie narzedzia albo dla
+zlozonych/wieloznacznych promptow w jezyku polskim wybiera gorsze narzedzie (np. `local_knowledge`
+zamiast `web_search`) - to ograniczenie malego modelu, nie blad integracji. Wieksze modele
+(np. `qwen2.5`, `llama3.1:8b`) dawalyby bardziej stabilne wyniki, kosztem szybkosci/RAM.
 
 ## Struktura plikow
 
