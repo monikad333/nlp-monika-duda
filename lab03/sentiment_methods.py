@@ -5,7 +5,7 @@ from typing import Any
 import numpy as np
 
 from common.nlp_task import tokenize_text
-from lab03.config import DATASET_NAMES, MAX_LEN
+from lab03.config import MAX_LEN
 from lab03.datasets import load_custom_dataset
 from lab03.model_loader import list_available_models, load_artifacts
 from lab03.preprocessing import clean_texts, texts_to_padded_sequences
@@ -150,7 +150,8 @@ def stanza_based(text: str) -> dict[str, Any]:
 
 
 def sequential_based(text: str, method: str, dataset_name: str | None = None) -> dict[str, Any]:
-    candidate_datasets = [dataset_name] if dataset_name else DATASET_NAMES
+    default_search_order = ["custom", "imdb", "amazon"]
+    candidate_datasets = [dataset_name] if dataset_name else default_search_order
 
     last_error: Exception | None = None
     for candidate in candidate_datasets:

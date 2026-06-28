@@ -25,7 +25,21 @@ def resolve_methods(methods_arg: str) -> list[str]:
     return methods
 
 
+def _train_fresh_ml_pipeline(method: str, train_texts: list[str], train_labels: list[str]):
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.naive_bayes import MultinomialNB
+    from sklearn.pipeline import Pipeline
+
+    classifier = MultinomialNB() if method == "nb" else RandomForestClassifier(n_estimators=200, random_state=42)
+    pipeline = Pipeline([("vectorizer", TfidfVectorizer()), ("classifier", classifier)])
+    pipeline.fit(train_texts, train_labels)
+    return pipeline
+
+
 def run_compare(dataset_name: str, methods_arg: str, sample_limit: int = 30) -> dict[str, Any]:
+    from sklearn.model_selection import train_test_split
+
     methods = resolve_methods(methods_arg)
     texts, labels = load_dataset(dataset_name, max_samples_per_class=sample_limit)
 
@@ -36,6 +50,11 @@ def run_compare(dataset_name: str, methods_arg: str, sample_limit: int = 30) -> 
         save_wordcloud_for_class(class_texts, class_name, f"{PLOTS_DIR}/wordcloud_{class_name}.png")
     save_class_distribution_plot(labels, f"{PLOTS_DIR}/class_distribution_{dataset_name}.png")
 
+    # Held-out split so nb/rf are evaluated on unseen data, not their own training set.
+    train_texts, test_texts, train_labels, test_labels = train_test_split(
+        texts, labels, test_size=0.3, random_state=42, stratify=labels
+    )
+
     rows: list[dict[str, Any]] = []
     skipped: dict[str, str] = {}
 
@@ -43,15 +62,24 @@ def run_compare(dataset_name: str, methods_arg: str, sample_limit: int = 30) -> 
         predictions: list[str] = []
         true_labels: list[str] = []
 
-        for text, true_label in zip(texts, labels):
+        if method in {"nb", "rf"}:
             try:
-                result = run_sentiment_method(method, text)
-            except SentimentMethodError as exc:
+                pipeline = _train_fresh_ml_pipeline(method, train_texts, train_labels)
+            except ValueError as exc:
                 skipped[method] = str(exc)
-                predictions = []
-                break
-            predictions.append(result["label"])
-            true_labels.append(true_label)
+                continue
+            predictions = list(pipeline.predict(test_texts))
+            true_labels = test_labels
+        else:
+            for text, true_label in zip(test_texts, test_labels):
+                try:
+                    result = run_sentiment_method(method, text)
+                except SentimentMethodError as exc:
+                    skipped[method] = str(exc)
+                    predictions = []
+                    break
+                predictions.append(result["label"])
+                true_labels.append(true_label)
 
         if not predictions:
             continue
