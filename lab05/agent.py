@@ -11,9 +11,39 @@ from lab05.config import HISTORY_PATH, MAX_TOOL_ROUNDS, OLLAMA_HOST, OLLAMA_TIME
 from lab05.tool_schemas import TOOL_SCHEMAS
 from lab05.tools import execute_tool
 
+SYSTEM_PROMPT = (
+    "You are an assistant with access to tools: web_search (general facts from Wikipedia), "
+    "analyze_image (describe an image file), simple_calculator (arithmetic), "
+    "local_knowledge (a small local FAQ - only useful for the handful of facts it contains, "
+    "NOT for weather, news, or anything time-sensitive), and get_weather (current weather for a city). "
+    "Always call get_weather for any weather question - never guess or invent weather data yourself. "
+    "If a tool result does not actually answer the question, call a different, more appropriate tool "
+    "instead of making up an answer. Only answer directly without a tool for greetings or general "
+    "knowledge you are fully confident about."
+)
+
 
 class AgentError(ValueError):
     pass
+
+
+def _extract_fallback_tool_call(content: str) -> dict[str, Any] | None:
+    """Some small models emit a tool call as raw JSON text instead of the structured tool_calls field."""
+    stripped = (content or "").strip()
+    if not stripped.startswith("{") or '"name"' not in stripped:
+        return None
+
+    try:
+        payload = json.loads(stripped)
+    except json.JSONDecodeError:
+        return None
+
+    name = payload.get("name")
+    arguments = payload.get("parameters") or payload.get("arguments") or {}
+    if not name or not isinstance(arguments, dict):
+        return None
+
+    return {"function": {"name": name, "arguments": arguments}}
 
 
 def _call_ollama_chat(messages: list[dict[str, Any]]) -> dict[str, Any]:
@@ -43,7 +73,10 @@ def run_agent(user_text: str) -> dict[str, Any]:
     if not user_text or not user_text.strip():
         raise AgentError("Text cannot be empty.")
 
-    messages: list[dict[str, Any]] = [{"role": "user", "content": user_text}]
+    messages: list[dict[str, Any]] = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": user_text},
+    ]
     tool_call_log: list[dict[str, Any]] = []
     started_at = time.time()
 
@@ -51,6 +84,11 @@ def run_agent(user_text: str) -> dict[str, Any]:
         payload = _call_ollama_chat(messages)
         message = payload.get("message", {})
         tool_calls = message.get("tool_calls") or []
+
+        if not tool_calls:
+            fallback_call = _extract_fallback_tool_call(message.get("content", ""))
+            if fallback_call:
+                tool_calls = [fallback_call]
 
         if not tool_calls:
             final_answer = message.get("content", "").strip()
