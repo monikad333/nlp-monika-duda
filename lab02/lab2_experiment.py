@@ -8,10 +8,10 @@ from typing import Any
 from sklearn.metrics import accuracy_score, f1_score
 from sklearn.model_selection import train_test_split
 
-from lab2_datasets import load_dataset
-from lab2_embeddings import EMBEDDING_NAMES, build_embedding, similar_words
-from lab2_models import build_model, resolve_methods
-from lab2_visualize import (
+from lab02.lab2_datasets import load_dataset
+from lab02.lab2_embeddings import EMBEDDING_NAMES, build_embedding, similar_words
+from lab02.lab2_models import build_model, resolve_methods
+from lab02.lab2_visualize import (
     save_confusion_matrix,
     save_embedding_reduction,
     save_feature_importance,
@@ -161,13 +161,14 @@ def run_classify_experiment(
                         generated_files.append(saved_path)
 
     if similar_words_by_embedding:
-        with open("lab2_similar_words.txt", "w", encoding="utf-8") as file:
+        similar_words_path = os.path.join(os.path.dirname(results_path) or ".", "lab2_similar_words.txt")
+        with open(similar_words_path, "w", encoding="utf-8") as file:
             for embedding_name, matches in similar_words_by_embedding.items():
                 file.write(f"[{embedding_name}]\n")
                 for word, neighbours in matches.items():
                     file.write(f"{word}: {neighbours}\n")
                 file.write("\n")
-        generated_files.append("lab2_similar_words.txt")
+        generated_files.append(similar_words_path)
 
     _write_results_csv(all_rows, results_path)
 

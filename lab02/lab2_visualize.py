@@ -14,7 +14,7 @@ from sklearn.manifold import TSNE
 from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
 from wordcloud import WordCloud
 
-from lab2_embeddings import tokenize_for_embedding
+from lab02.lab2_embeddings import tokenize_for_embedding
 
 
 def _ensure_dir(path: str) -> None:

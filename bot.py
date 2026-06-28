@@ -11,15 +11,15 @@ from typing import Any
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
-from classifier import (
+from common.classifier import (
     VALID_CLASSES,
     append_records,
     load_sentences,
     normalize_class_name,
     predict_class,
 )
-from nlp_task import ensure_nltk_resources, run_corpus_stats, run_full_pipeline, run_single_task, split_sentences
-from lab2_experiment import ClassifyArgsError, parse_classify_args, run_classify_experiment
+from common.nlp_task import ensure_nltk_resources, run_corpus_stats, run_full_pipeline, run_single_task, split_sentences
+from lab02.lab2_experiment import ClassifyArgsError, parse_classify_args, run_classify_experiment
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -27,10 +27,10 @@ logging.basicConfig(
 )
 LOGGER = logging.getLogger(__name__)
 
-DATA_PATH = os.getenv("SENTENCES_PATH", "sentences.json")
-PLOTS_DIR = os.getenv("PLOTS_DIR", "plots")
-LAB2_PLOTS_DIR = os.getenv("LAB2_PLOTS_DIR", "lab2plots")
-LAB2_RESULTS_PATH = os.getenv("LAB2_RESULTS_PATH", "lab2results.csv")
+DATA_PATH = os.getenv("SENTENCES_PATH", "lab01/sentences.json")
+PLOTS_DIR = os.getenv("PLOTS_DIR", "lab01/plots")
+LAB2_PLOTS_DIR = os.getenv("LAB2_PLOTS_DIR", "lab02/plots")
+LAB2_RESULTS_PATH = os.getenv("LAB2_RESULTS_PATH", "lab02/lab2results.csv")
 LAB2_MAX_PLOTS_TO_SEND = int(os.getenv("LAB2_MAX_PLOTS_TO_SEND", "6"))
 
 

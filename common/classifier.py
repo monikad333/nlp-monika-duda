@@ -8,7 +8,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-from nlp_task import preprocess_for_model
+from common.nlp_task import preprocess_for_model
 
 CLASS_TO_ID = {
     "pozytywny": 1,

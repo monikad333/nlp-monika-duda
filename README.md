@@ -1,6 +1,18 @@
-# Telegram NLP Bot (Lab01)
+# Telegram NLP Bot (WSEI NLP)
 
-Projekt realizuje wymagania z `Lab01.md`.
+Jeden bot Telegram, kazde laboratorium dostaje swoj folder (`lab01/`, `lab02/`, ...) z wlasnymi
+plikami: tresc zadania (`LabXX.md`), kod specyficzny dla danego laba, wygenerowane dane i wykresy
+(`plots/`). Kod wspoldzielony przez wszystkie laby (tokenizacja, czyszczenie tekstu, klasyfikator
+z Lab01) jest w `common/`.
+
+```text
+common/            wspolne moduly NLP (nlp_task.py, classifier.py)
+lab01/             Lab01.md, sentences.json, plots/
+lab02/             Lab02.md, lab2_*.py, lab2results.csv, lab2_similar_words.txt, plots/
+bot.py             jeden punkt wejscia - importuje z common/ i lab0N/
+```
+
+Projekt realizuje wymagania z `lab01/Lab01.md` i `lab02/Lab02.md`.
 
 ## Funkcjonalnosci
 
@@ -46,8 +58,10 @@ export TELEGRAM_BOT_TOKEN="<YOUR_TOKEN>"
 
 Opcjonalne zmienne:
 
-- `SENTENCES_PATH` (domyslnie: `sentences.json`)
-- `PLOTS_DIR` (domyslnie: `plots`)
+- `SENTENCES_PATH` (domyslnie: `lab01/sentences.json`)
+- `PLOTS_DIR` (domyslnie: `lab01/plots`)
+- `LAB2_PLOTS_DIR` (domyslnie: `lab02/plots`)
+- `LAB2_RESULTS_PATH` (domyslnie: `lab02/lab2results.csv`)
 - `POLISH_STOPWORDS_URL` (domyslnie: `https://raw.githubusercontent.com/stopwords-iso/stopwords-pl/master/raw/gh-stopwords-json-pl.txt`)
 
 ## Uruchomienie
@@ -85,15 +99,15 @@ Parametry:
 - `gridsearch` - `true`/`false`, strojenie hiperparametrow z `cv=3`.
 - `run` - liczba powtorzen z innym seedem (`42`, `1337`, `2024`, ...), wyniki sa usredniane w odpowiedzi bota.
 
-Wygenerowane artefakty:
+Wygenerowane artefakty (w `lab02/`):
 
-- `lab2plots/wordcloud_corpus.png`, `lab2plots/wordcloud_class_<klasa>.png`
-- `lab2plots/{dataset}_{embedding}_{pca|tsne|svd}_embedding.png` - wizualizacja przestrzeni embeddingu
-- `lab2plots/confusion_<embedding>_<model>.png` - macierze pomylek
-- `lab2plots/feature_importance_<dataset>_<embedding>_<model>.txt` - top cechy (dla `bow`/`tfidf` + `rf`/`logreg`)
-- `lab2_similar_words.txt` - podobne slowa dla `word2vec`/`glove` (space, computer, science, music, car), osobna sekcja na embedding
-- `lab2plots/word_embedding_<embedding>_pca.png`, `lab2plots/word_embedding_<embedding>_tsne.png` (per `word2vec`/`glove`)
-- `lab2results.csv` - wszystkie wyniki (`dataset,embedding,model,accuracy,macro_f1,seed`)
+- `lab02/plots/wordcloud_corpus.png`, `lab02/plots/wordcloud_class_<klasa>.png`
+- `lab02/plots/{dataset}_{embedding}_{pca|tsne|svd}_embedding.png` - wizualizacja przestrzeni embeddingu
+- `lab02/plots/confusion_<embedding>_<model>.png` - macierze pomylek
+- `lab02/plots/feature_importance_<dataset>_<embedding>_<model>.txt` - top cechy (dla `bow`/`tfidf` + `rf`/`logreg`)
+- `lab02/lab2_similar_words.txt` - podobne slowa dla `word2vec`/`glove` (space, computer, science, music, car), osobna sekcja na embedding
+- `lab02/plots/word_embedding_<embedding>_pca.png`, `lab02/plots/word_embedding_<embedding>_tsne.png` (per `word2vec`/`glove`)
+- `lab02/lab2results.csv` - wszystkie wyniki (`dataset,embedding,model,accuracy,macro_f1,seed`)
 
 Domyslnie kazda klasa datasetu jest ograniczona do `LAB2_MAX_SAMPLES_PER_CLASS` (120) przykladow, zeby
 eksperyment liczyl sie w rozsadnym czasie - mozna to zmienic zmienna srodowiskowa.
@@ -101,10 +115,12 @@ eksperyment liczyl sie w rozsadnym czasie - mozna to zmienic zmienna srodowiskow
 ## Struktura plikow
 
 - `bot.py` - Telegram handlers i uruchomienie bota
-- `nlp_task.py` - zadania NLP, pipeline, statystyki, wykresy
-- `classifier.py` - zapis/odczyt JSON, trening modelu, predykcja
-- `sentences.json` - dane treningowe
-- `plots/` - wygenerowane wykresy PNG
+- `common/nlp_task.py` - zadania NLP, pipeline, statystyki, wykresy (uzywane przez Lab01 i Lab02)
+- `common/classifier.py` - zapis/odczyt JSON, trening modelu, predykcja (Lab01)
+- `lab01/sentences.json` - dane treningowe Lab01
+- `lab01/plots/` - wygenerowane wykresy PNG z Lab01
+- `lab02/lab2_*.py` - dataset/embeddingi/modele/wizualizacje/orkiestracja eksperymentu z Lab02
+- `lab02/plots/` - wygenerowane wykresy PNG z Lab02
 
 ## Uwagi
 

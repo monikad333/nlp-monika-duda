@@ -6,7 +6,7 @@ from typing import Any
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 
-from nlp_task import clean_text, tokenize_text
+from common.nlp_task import clean_text, tokenize_text
 
 EMBEDDING_NAMES = ["bow", "tfidf", "word2vec", "glove"]
 GLOVE_MODEL_NAME = os.getenv("LAB2_GLOVE_MODEL", "glove-wiki-gigaword-50")
