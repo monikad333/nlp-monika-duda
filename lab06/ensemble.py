@@ -6,8 +6,9 @@ from typing import Any
 from lab06.entities_moderation import extract_moderation_entities
 from lab06.safety_models import classify_bielik_guard, classify_qwen_guard, detect_private_info
 from lab06.sentiment_moderation import analyze_sentiment_for_moderation
-from lab06.storage import append_moderation_log, upsert_user_history
+from lab06.storage import append_moderation_log, get_user_history_record, upsert_user_history
 from lab06.tools import (
+    add_to_watchlist,
     approve_content,
     flag_for_human_review,
     reject_content,
@@ -92,7 +93,16 @@ def moderate_text(text: str, user_id: str = "anonymous", content_id: str | None 
                 for category in (bielik_result["label"].split("+") + qwen_result["categories"])
                 if category and category.lower() not in _NON_VIOLATION_BIELIK_LABELS
             ]
+        was_repeat_offender_before = False
+        existing_history = get_user_history_record(user_id)
+        if existing_history:
+            was_repeat_offender_before = existing_history["is_repeat_offender"] == "True"
+
         user_history = upsert_user_history(user_id, username=user_id, violation_categories=categories or ["unspecified"])
+
+        just_became_repeat_offender = user_history["is_repeat_offender"] == "True" and not was_repeat_offender_before
+        if just_became_repeat_offender:
+            add_to_watchlist(user_id, reason=f"crossed repeat-offender threshold ({user_history['total_violations']} violations)")
 
     append_moderation_log(
         {

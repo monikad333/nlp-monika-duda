@@ -4,7 +4,7 @@ import csv
 import os
 from typing import Any
 
-from lab06.config import FEEDBACK_LOG_PATH, MODERATION_LOG_PATH, USER_HISTORY_PATH, WATCHLIST_PATH
+from lab06.config import FEEDBACK_LOG_PATH, MODERATION_LOG_PATH, REPEAT_OFFENDER_THRESHOLD, USER_HISTORY_PATH, WATCHLIST_PATH
 
 MODERATION_LOG_FIELDS = [
     "timestamp",
@@ -121,7 +121,7 @@ def upsert_user_history(
         existing["last_violation_date"] = time.strftime("%Y-%m-%d")
         existing["categories"] = ";".join(sorted(existing_categories))
         existing["risk_score"] = str(round(min(1.0, total_violations / 10), 2))
-        existing["is_repeat_offender"] = str(total_violations >= 3)
+        existing["is_repeat_offender"] = str(total_violations >= REPEAT_OFFENDER_THRESHOLD)
 
     if shadow_banned:
         existing["shadow_bans"] = str(int(existing["shadow_bans"]) + 1)
