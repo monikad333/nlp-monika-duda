@@ -18,11 +18,18 @@ def _strip_diacritics(text: str) -> str:
     return text.lower().translate(mapping)
 
 
-def submit_feedback(content_id: str, moderator_decision: str, category: str = "unspecified") -> dict[str, Any]:
-    """Record a moderator override against the bot's original decision for the given content_id."""
+def submit_feedback(content_id: str, moderator_decision: str, comment: str = "") -> dict[str, Any]:
+    """Record a moderator override against the bot's original decision for the given content_id.
+
+    The category is derived from the bot's own original reason/categorization (e.g. "hate_speech",
+    "spam"), not from the moderator's free-text comment - the comment is just human-readable context.
+    """
     log_entry = next((row for row in load_moderation_log() if row["content_id"] == content_id), None)
     if not log_entry:
         raise ValueError(f"No moderation log entry found for content_id '{content_id}'.")
+
+    reason = log_entry.get("reason") or ""
+    category = reason.split("+")[0] if reason and reason != "model_disagreement" else "unspecified"
 
     add_feedback(
         content_id=content_id,

@@ -220,7 +220,7 @@ async def mod_add_feedback_command(update: Update, context: ContextTypes.DEFAULT
     _, content_id, comment, correct_decision = args
 
     try:
-        result = submit_feedback(content_id, moderator_decision=correct_decision.upper(), category=comment[:50])
+        result = submit_feedback(content_id, moderator_decision=correct_decision.upper(), comment=comment[:200])
     except ValueError as exc:
         await update.message.reply_text(f"Error: {exc}")
         return
