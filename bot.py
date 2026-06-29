@@ -48,6 +48,7 @@ from lab06.commands import (
     mod_watchlist_command,
     moderate_command,
 )
+from lab06.commands import help_command as lab06_help_command
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -426,6 +427,7 @@ def main() -> None:
     app.add_handler(CommandHandler("mod_watchlist", mod_watchlist_command))
     app.add_handler(CommandHandler("mod_train_on_feedback", mod_train_on_feedback_command))
     app.add_handler(CommandHandler("mod_policy_check", mod_policy_check_command))
+    app.add_handler(CommandHandler("mod_help", lab06_help_command))
     app.add_error_handler(error_handler)
 
     # Python 3.14 no longer creates a default loop for the main thread.
