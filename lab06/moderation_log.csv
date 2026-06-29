@@ -1,0 +1,5 @@
+timestamp,content_id,user_id,text,model_bielik_decision,model_bielik_score,model_qwen_decision,model_qwen_score,pii_detected,sentiment,action,moderator_override,reason,appeal_filed
+2026-06-29T10:09:42,1782720568088,8325128381,"Uwielbiam ten produkt, najlepszy zakup!",clean,0.9,low,1.0,False,positive,APPROVE,False,,False
+2026-06-29T10:09:55,1782720593484,8325128381,"Jesteś głupszy niż cegła, powinieneś się zabić",hate_speech+self_harm,0.85,high,1.0,False,neutral,REJECT,False,hate_speech+self_harm,False
+2026-06-29T10:10:26,1782720624500,8325128381,"Mój numer to +48-123-456-789, email to john@example.com",clean,0.9,low,0.9,True,neutral,REJECT,False,personally_identifiable_information,False
+2026-06-29T10:11:04,1782720663131,8325128381,Kupiłem ten produkt i jestem rozczarowany,clean,0.9,low,1.0,False,negative,APPROVE,False,,False
