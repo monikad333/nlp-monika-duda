@@ -38,6 +38,16 @@ from lab04.commands import (
     translate_command,
 )
 from lab05.commands import ask_command, photo_command, tools_command
+from lab06.commands import (
+    mod_add_feedback_command,
+    mod_analytics_command,
+    mod_history_command,
+    mod_policy_check_command,
+    mod_status_command,
+    mod_train_on_feedback_command,
+    mod_watchlist_command,
+    moderate_command,
+)
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -116,7 +126,15 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         '/language_detect text="tekst"\n'
         '/ask text="pytanie" (function/tool calling przez Ollama)\n'
         "/tools\n"
-        "Wyslij zdjecie, by uzyc narzedzia Vision\n\n"
+        "Wyslij zdjecie, by uzyc narzedzia Vision\n"
+        '/moderate "tekst" (Lab06 - moderacja treści)\n'
+        "/mod_status <content_id>\n"
+        "/mod_history <user_id>\n"
+        "/mod_analytics\n"
+        '/mod_add_feedback <content_id> "komentarz" "decyzja"\n'
+        "/mod_watchlist\n"
+        "/mod_train_on_feedback\n"
+        '/mod_policy_check "tekst"\n\n'
         "Allowed classes: pozytywny, neutralny, negatywny"
     )
     await update.message.reply_text(message)
@@ -400,6 +418,14 @@ def main() -> None:
     app.add_handler(CommandHandler("ask", ask_command))
     app.add_handler(CommandHandler("tools", tools_command))
     app.add_handler(MessageHandler(filters.PHOTO, photo_command))
+    app.add_handler(CommandHandler("moderate", moderate_command))
+    app.add_handler(CommandHandler("mod_status", mod_status_command))
+    app.add_handler(CommandHandler("mod_history", mod_history_command))
+    app.add_handler(CommandHandler("mod_analytics", mod_analytics_command))
+    app.add_handler(CommandHandler("mod_add_feedback", mod_add_feedback_command))
+    app.add_handler(CommandHandler("mod_watchlist", mod_watchlist_command))
+    app.add_handler(CommandHandler("mod_train_on_feedback", mod_train_on_feedback_command))
+    app.add_handler(CommandHandler("mod_policy_check", mod_policy_check_command))
     app.add_error_handler(error_handler)
 
     # Python 3.14 no longer creates a default loop for the main thread.

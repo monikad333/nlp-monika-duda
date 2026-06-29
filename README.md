@@ -16,10 +16,15 @@ lab04/             Lab04.md, config/ner/nel/translation/summarization/knowledge_
                    language/commands/utils.py, lab4plots/, summaries/
 lab05/             Lab05.md, config/tools/tool_schemas/agent/commands.py,
                    knowledge_base.json, history.jsonl, images/
+lab06/             Lab06.md, config/safety_models/sentiment_moderation/entities_moderation/
+                   ensemble/tools/storage/feedback/analytics/commands.py,
+                   moderation_log.csv, user_moderation_history.csv, feedback_log.csv,
+                   watchlist.csv, learned_keywords.json
 bot.py             jeden punkt wejscia - importuje z common/ i lab0N/
 ```
 
-Projekt realizuje wymagania z `lab01/Lab01.md`, `lab02/Lab02.md` i `lab03/lab03.md`.
+Projekt realizuje wymagania z `lab01/Lab01.md`, `lab02/Lab02.md`, `lab03/lab03.md`, `lab04/Lab04.md`,
+`lab05/Lab05.md` i `lab06/Lab06.md`.
 
 ## Funkcjonalnosci
 
@@ -301,6 +306,75 @@ dla porownania miast), ale czasem dokleja dodatkowe, niepotrzebne wywolanie narz
 zlozonych/wieloznacznych promptow w jezyku polskim wybiera gorsze narzedzie (np. `local_knowledge`
 zamiast `web_search`) - to ograniczenie malego modelu, nie blad integracji. Wieksze modele
 (np. `qwen2.5`, `llama3.1:8b`) dawalyby bardziej stabilne wyniki, kosztem szybkosci/RAM.
+
+## Lab06 - Content Moderation & Policy Enforcement Bot
+
+Komendy (patrz `lab06/Lab06.md`):
+
+```text
+/moderate "tekst do sprawdzenia"
+/mod_status <content_id>
+/mod_history <user_id>
+/mod_analytics
+/mod_add_feedback <content_id> "komentarz" "poprawna_decyzja"
+/mod_watchlist
+/mod_train_on_feedback
+/mod_policy_check "tekst" (dry-run, nie zapisuje do logow)
+```
+
+Przyklady:
+
+```text
+/moderate "Uwielbiam ten produkt, najlepszy zakup!"
+/moderate "Jesteś głupszy niż cegła, powinieneś się zabić"
+/moderate "Mój numer to +48-123-456-789, email to john@example.com"
+/mod_add_feedback 1750000000000 "to bylo zle ocenione" "APPROVE"
+```
+
+**Pipeline `/moderate`** (`lab06/ensemble.py`) laczy 3 modele bezpieczenstwa + sentyment + NER:
+
+1. `detect_private_info` (`lab06/safety_models.py`) - model `openai/privacy-filter`
+   (token-classification, ungated) + regex jako siatka bezpieczenstwa dla email/telefon/karty
+   platniczej. PII wykryte tylko przez deterministyczne typy (email/telefon/karta/adres)
+   wyzwala automatyczny REJECT - "miekkie" typy (np. `private_person`, ktory na polskim tekscie
+   generuje sporo falszywych alarmow przy slowach zaczynajacych sie wielka litera) sa tylko
+   informacyjne, nie blokujace.
+2. `classify_bielik_guard` - **`speakleash/Bielik-Guard-0.1B-v1.0` jest modelem gated na
+   Hugging Face** (wymaga zalogowanego konta HF z zaakceptowana licencja). Bez `HF_TOKEN` z
+   dostepem do tego repo kod automatycznie przelacza sie na lokalny fallback - leksykon
+   toksycznych/spamowych/przemocowych slow PL (`_POLISH_TOXIC_LEXICON`), rozszerzany przez
+   `/mod_train_on_feedback`. Jesli chcesz uzyc prawdziwego modelu: zaloz konto na
+   huggingface.co, zaakceptuj licencje na stronie modelu, wygeneruj token i ustaw
+   `export HF_TOKEN=...` przed odpaleniem bota.
+3. `classify_qwen_guard` - lokalny model Ollama (`LAB6_QWEN_GUARD_MODEL`, domyslnie
+   `qwen2.5:1.5b`) prompted jako klasyfikator bezpieczenstwa (structured JSON output, zgodnie
+   z `Lab06.md`). **Male modele Qwen klasyfikuja po angielsku znacznie lepiej niz po polsku**
+   (np. `qwen2.5:0.5b` nie wykrywal oczywistego podzegania do samobojstwa po polsku, ale
+   wykrywal identyczny tekst po angielsku) - tekst jest wiec automatycznie tlumaczony na
+   angielski (reuzywajac `lab04.translation`) przed klasyfikacja.
+4. `analyze_sentiment_for_moderation` (`lab06/sentiment_moderation.py`) - reuzywa rule-based
+   sentyment z Lab03 + prosta heurystyka emocji/sarkazmu. Sentyment jest tylko kontekstem, nie
+   decyzja - negatywny sentyment nie powoduje automatycznego REJECT (przykladowo "Kupiłem ten
+   produkt i jestem rozczarowany" jest poprawnie APPROVE).
+5. `extract_moderation_entities` (`lab06/entities_moderation.py`) - regex dla
+   usernames/URL/email/telefon + NER z Lab04 (`spacy`) dla osob/organizacji/lokalizacji.
+
+**Strategia ensemble** (zgodnie z `Lab06.md`): PII -> zawsze REJECT; Qwen Guard `critical` ->
+REJECT + flag account; w pozostalych przypadkach glosowanie Bielik vs Qwen (2/2 -> REJECT,
+1/2 -> FLAG_FOR_REVIEW, 0/2 -> APPROVE).
+
+**Feedback loop** (`lab06/feedback.py`): `/mod_add_feedback` zapisuje override moderatora do
+`lab06/feedback_log.csv`. Po kazdych `LAB6_FEEDBACK_RETRAIN_THRESHOLD` (domyslnie 5) wpisach
+automatycznie odpala sie `train_on_feedback()`, ktore wydobywa nowe slowa-klucze z przypadkow,
+gdzie bot byl za lagodny (np. APPROVE/FLAG zmienione przez moderatora na REJECT), i dopisuje je
+do `lab06/learned_keywords.json` - rozszerzajac leksykon uzywany przez fallback Bielik Guard.
+To uproszczony, ale realnie dzialajacy odpowiednik "fine-tuningu" bez infrastruktury GPU.
+
+**Pliki danych:** `lab06/moderation_log.csv`, `lab06/user_moderation_history.csv`,
+`lab06/feedback_log.csv`, `lab06/watchlist.csv` - kolumny zgodne z `Lab06.md`.
+
+Opcjonalne zmienne: `LAB6_QWEN_GUARD_MODEL`, `LAB6_BIELIK_GUARD_MODEL`, `LAB6_PII_MODEL`,
+`LAB6_REPEAT_OFFENDER_THRESHOLD` (domyslnie 3), `LAB6_FEEDBACK_RETRAIN_THRESHOLD` (domyslnie 5).
 
 ## Struktura plikow
 
