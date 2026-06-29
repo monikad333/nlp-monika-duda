@@ -1,2 +1,2 @@
 user_id,username,total_violations,last_violation_date,categories,risk_score,is_repeat_offender,shadow_bans,appeals_filed
-8325128381,8325128381,3,2026-06-29,censored;explicit_content;hate_speech;self_harm;sexual;violence,0.3,True,2,0
+8325128381,8325128381,4,2026-06-29,censored;explicit_content;hate_speech;self_harm;sexual;threats;violence,0.4,True,2,0
