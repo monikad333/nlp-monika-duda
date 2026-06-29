@@ -8,3 +8,5 @@ timestamp,content_id,user_id,text,model_bielik_decision,model_bielik_score,model
 2026-06-29T10:49:52,1782722991172,8325128381,Kupiłem ten produkt i jestem zadowolony,clean,0.9,safe,1.0,False,positive,APPROVE,False,,False
 2026-06-29T10:50:05,1782723002963,8325128381,"Ci urzędnicy to banda nieudaczników, powinni wszyscy odejść",clean,0.9,low,0.9,False,neutral,APPROVE,False,,False
 2026-06-29T11:05:39,1782723935957,8325128381,"Sprawdz nasza oferte zarobkowa, napisz do mnie po szczegoly",clean,0.9,low,0.9,False,neutral,APPROVE,False,,False
+2026-06-29T11:09:02,1782724130575,8325128381,"Sprawdz nasza oferte zarobkowa, napisz do mnie po szczegoly",unspecified,0.85,low,0.0,False,neutral,FLAG_FOR_REVIEW,False,model_disagreement,False
+2026-06-29T11:10:02,1782724200995,8325128381,Idź się zabij,clean,0.9,critical,0.0,False,neutral,REJECT,False,critical_risk,False
