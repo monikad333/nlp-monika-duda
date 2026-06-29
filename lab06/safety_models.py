@@ -26,9 +26,12 @@ _REGEX_PATTERNS = {
 }
 
 _POLISH_TOXIC_LEXICON = {
-    "hate_speech": {"glupszy", "idiot", "debil", "kretyn", "wszyscy zlodzieje", "zlodzieje"},
-    "self_harm": {"zabij sie", "powinienes sie zabic", "samobojstwo"},
-    "violence": {"zabije", "pobije", "zniszcze cie"},
+    "hate_speech": {"glupszy", "idiot", "debil", "kretyn", "wszyscy zlodzieje", "zlodzieje", "bezwartosciowy"},
+    "self_harm": {
+        "zabij sie", "powinienes sie zabic", "samobojstwo", "zniknij z tego swiata",
+        "zniknac z tego swiata", "nie zasluzysz zyc", "nikomu nie potrzebny", "lepiej by cie nie bylo",
+    },
+    "violence": {"zabije", "pobije", "zniszcze cie", "znajde cie i pobije", "rozjebie", "skrzywdze cie"},
     "sexual": {"erotyczny", "porno"},
     "spam": {"kliknij tutaj", "darmowe pieniadze", "zarabiaj z domu", "promocja link"},
 }
