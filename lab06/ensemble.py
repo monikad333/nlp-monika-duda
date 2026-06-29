@@ -84,7 +84,14 @@ def moderate_text(text: str, user_id: str = "anonymous", content_id: str | None 
 
     user_history = None
     if action in {"REJECT", "FLAG_FOR_REVIEW"}:
-        categories = [category for category in (bielik_result["label"].split("+") + qwen_result["categories"]) if category]
+        if reason == "personally_identifiable_information":
+            categories = [reason]
+        else:
+            categories = [
+                category
+                for category in (bielik_result["label"].split("+") + qwen_result["categories"])
+                if category and category.lower() not in _NON_VIOLATION_BIELIK_LABELS
+            ]
         user_history = upsert_user_history(user_id, username=user_id, violation_categories=categories or ["unspecified"])
 
     append_moderation_log(
